@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#111827" />
+  <title>Rifas · Control de Boletas</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#" aria-label="Inicio">Rifas<span>·</span></a>
+
+    <div class="raffle-picker">
+      <label class="sr-only" for="raffleSelect">Rifa activa</label>
+      <select id="raffleSelect" disabled>
+        <option value="">Sin rifas creadas</option>
+      </select>
+    </div>
+
+    <div class="header-actions">
+      <button id="lockButton" class="button button--ghost" type="button" hidden>
+        Bloquear
+      </button>
+      <button id="newRaffleButton" class="button button--primary" type="button">
+        + Nueva Rifa
+      </button>
+    </div>
+  </header>
+
+  <main class="container">
+    <section id="raffleOverview" class="overview" hidden>
+      <div class="raffle-heading">
+        <div>
+          <p class="eyebrow">Rifa activa</p>
+          <h1 id="raffleTitle">—</h1>
+        </div>
+        <div class="draw-date">
+          <span>Fecha del sorteo</span>
+          <strong id="drawDate">—</strong>
+        </div>
+      </div>
+
+      <div class="metrics" aria-label="Resumen de la rifa">
+        <article class="metric">
+          <span>Vendidos</span>
+          <strong id="soldMetric">0/100</strong>
+        </article>
+        <article class="metric">
+          <span>Disponibles</span>
+          <strong id="availableMetric">100</strong>
+        </article>
+        <article class="metric metric--paid">
+          <span>Recaudado</span>
+          <strong id="paidMetric">$0</strong>
+        </article>
+        <article class="metric metric--pending">
+          <span>Por cobrar</span>
+          <strong id="pendingMetric">$0</strong>
+        </article>
+      </div>
+    </section>
+
+    <div class="workspace-layout">
+        
+  <section class="tickets-section">
+    <div class="section-title">
+      <div>
+        <p class="eyebrow">Boletas</p>
+        <h2>Números del 00 al 99</h2>
+      </div>
+
+      <div class="section-tools">
+        <button id="downloadImageButton" class="button button--ghost" type="button">
+          📷 Descargar Imagen (.jpg)
+        </button>
+
+        <div class="legend" aria-label="Estados">
+          <span><i class="dot dot--free"></i>Libre</span>
+          <span><i class="dot dot--pending"></i>Pendiente</span>
+          <span><i class="dot dot--paid"></i>Pagado</span>
+        </div>
+      </div>
+    </div>
+
+    <div id="emptyState" class="empty-state">
+      <h2>Selecciona o crea una rifa</h2>
+      <p>Las 100 boletas aparecerán aquí cuando tengas una rifa activa.</p>
+    </div>
+
+    <div id="ticketsGrid" class="tickets-grid" aria-live="polite"></div>
+  </section>
+
+  <aside class="clients-sidebar" aria-label="Clientes de la rifa">
+    <div class="clients-sidebar__header">
+      <div>
+        <p class="eyebrow">Compradores</p>
+        <h2>Clientes asignados</h2>
+      </div>
+      <span id="clientsCount" class="clients-count">0</span>
+    </div>
+
+    <p id="clientsEmpty" class="clients-empty">
+      Aún no hay boletas asignadas.
+    </p>
+
+    <ul id="clientsList" class="clients-list"></ul>
+  </aside>
+</div>
+  </main>
+
+  <dialog id="raffleModal" class="modal">
+    <form id="raffleForm" class="modal__content">
+      <div class="modal__header">
+        <div>
+          <p class="eyebrow">Configuración</p>
+          <h2>Nueva rifa</h2>
+        </div>
+        <button class="icon-button" type="button" data-close="raffleModal" aria-label="Cerrar">×</button>
+      </div>
+
+      <label>
+        Nombre de la rifa
+        <input id="raffleName" name="title" type="text" maxlength="100"
+          placeholder="Ej. Rifa de Aniversario" required />
+      </label>
+
+      <label>
+        Precio por boleta
+        <input id="rafflePrice" name="price" type="number" min="0.01" step="0.01"
+          placeholder="10000" required />
+      </label>
+
+      <label>
+        Fecha y hora del sorteo
+        <input id="raffleDate" name="drawDate" type="datetime-local" required />
+      </label>
+
+      <div class="modal__actions">
+        <button class="button button--ghost" type="button" data-close="raffleModal">Cancelar</button>
+        <button class="button button--primary" type="submit">Crear rifa</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="ticketModal" class="modal">
+    <form id="ticketForm" class="modal__content">
+      <div class="modal__header">
+        <div>
+          <p id="ticketModalKicker" class="eyebrow">Asignar boleta</p>
+          <h2 id="ticketModalTitle">Número 00</h2>
+        </div>
+        <button class="icon-button" type="button" data-close="ticketModal" aria-label="Cerrar">×</button>
+      </div>
+
+      <p id="ticketHelp" class="helper-text"></p>
+
+      <label>
+        Nombre del comprador
+        <input id="buyerInput" type="text" maxlength="100" placeholder="Nombre completo" required />
+      </label>
+
+      <fieldset>
+        <legend>Estado de pago</legend>
+        <div class="payment-options">
+          <label class="radio-card">
+            <input type="radio" name="paymentState" value="pending" checked />
+            <span>Pendiente</span>
+          </label>
+          <label class="radio-card">
+            <input type="radio" name="paymentState" value="paid" />
+            <span>Pagado</span>
+          </label>
+        </div>
+      </fieldset>
+
+      <label id="extraNumbersField">
+        Números adicionales <small>(opcional)</small>
+        <input id="extraNumbersInput" type="text" inputmode="numeric"
+          placeholder="Ej. 05, 12, 44" />
+        <small>Se asignarán al mismo comprador y con el mismo pago.</small>
+      </label>
+
+      <div class="modal__actions">
+        <button id="deleteTicketButton" class="button button--danger" type="button" hidden>
+          Liberar boleta
+        </button>
+        <span class="modal__spacer"></span>
+        <button class="button button--ghost" type="button" data-close="ticketModal">Cancelar</button>
+        <button id="saveTicketButton" class="button button--primary" type="submit">
+          Guardar
+        </button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="pinModal" class="modal">
+    <form id="pinForm" class="modal__content modal__content--small">
+      <div class="modal__header">
+        <div>
+          <p class="eyebrow">Acceso administrativo</p>
+          <h2>Ingresa el PIN</h2>
+        </div>
+        <button class="icon-button" type="button" data-close="pinModal" aria-label="Cerrar">×</button>
+      </div>
+
+      <label>
+        PIN de administración
+        <input id="pinInput" type="password" inputmode="numeric" autocomplete="off"
+          maxlength="20" required autofocus />
+      </label>
+
+      <p class="helper-text">El acceso permanecerá activo hasta cerrar esta pestaña.</p>
+
+      <div class="modal__actions">
+        <button class="button button--ghost" type="button" data-close="pinModal">Cancelar</button>
+        <button class="button button--primary" type="submit">Desbloquear</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script type="module" src="script.js"></script>
+</body>
+</html>
