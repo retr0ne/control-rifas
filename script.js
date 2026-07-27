@@ -13,6 +13,11 @@ const supabase = createClient(CONFIG.supabaseUrl, CONFIG.supabaseAnonKey);
 const $ = (selector) => document.querySelector(selector);
 
 const elements = {
+  clientPaymentModal: $("#clientPaymentModal"),
+  clientPaymentForm: $("#clientPaymentForm"),
+  clientPaymentDetails: $("#clientPaymentDetails"),
+  confirmClientPaymentButton: $("#confirmClientPaymentButton"),
+
   raffleSelect: $("#raffleSelect"),
   newRaffleButton: $("#newRaffleButton"),
   lockButton: $("#lockButton"),
@@ -54,6 +59,7 @@ const elements = {
   clientsCount: $("#clientsCount"),
 };
 
+let pendingClientPaymentBuyer = null;
 let raffles = [];
 let activeRaffle = null;
 let tickets = [];
@@ -212,6 +218,22 @@ function renderTickets() {
 
 function renderClients() {
   elements.clientsList.replaceChildren();
+if (
+    !elements.clientsList ||
+    !elements.clientsEmpty ||
+    !elements.clientsCount
+  ) {
+    return;
+  }
+
+  elements.clientsList.replaceChildren();
+
+  if (!activeRaffle || !tickets.length) {
+    elements.clientsEmpty.hidden = false;
+    elements.clientsCount.textContent = "0";
+    return;
+  }
+
 
   if (!activeRaffle || !tickets.length) {
     elements.clientsEmpty.hidden = false;
@@ -228,23 +250,49 @@ function renderClients() {
       const buyer = ticket.buyer.trim();
 
       if (!groupedClients.has(buyer)) {
-        groupedClients.set(buyer, []);
+        groupedClients.set(buyer, {
+          numbers: [],
+          pendingCount: 0
+        });
       }
 
-      groupedClients.get(buyer).push(ticket.number);
+      const client = groupedClients.get(buyer);
+      client.numbers.push(ticket.number);
+
+      if (!ticket.is_paid) {
+        client.pendingCount += 1;
+      }
     });
 
   elements.clientsEmpty.hidden = groupedClients.size > 0;
   elements.clientsCount.textContent = String(groupedClients.size);
 
-  groupedClients.forEach((numbers, buyer) => {
+  groupedClients.forEach((client, buyer) => {
     const item = document.createElement("li");
     item.className = "client-line";
+
+    const text = document.createElement("span");
+    text.className = "client-line__text";
 
     const name = document.createElement("strong");
     name.textContent = `+${buyer}: `;
 
-    item.append(name, document.createTextNode(numbers.join(", ")));
+    text.append(name, document.createTextNode(client.numbers.join(", ")));
+    item.append(text);
+
+    if (client.pendingCount > 0) {
+      const payButton = document.createElement("button");
+      payButton.type = "button";
+      payButton.className = "client-pay-button";
+      payButton.textContent = `Pagar ${client.pendingCount}`;
+
+      payButton.addEventListener("click", () => {
+        requireAdmin(() => openClientPaymentModal(buyer));
+      });
+
+      item.append(payButton);
+    }
+
     elements.clientsList.append(item);
   });
 }
@@ -626,6 +674,58 @@ async function deleteTicket() {
   showToast(`Boleta ${number} liberada.`);
 }
 
+function openClientPaymentModal(buyer) {
+  if (!activeRaffle || !elements.clientPaymentModal) {
+    showToast("No se encontró el modal de confirmación.", true);
+    return;
+  }
+
+  const pendingTickets = tickets
+    .filter((ticket) => ticket.buyer.trim() === buyer && !ticket.is_paid)
+    .map((ticket) => ticket.number);
+
+  if (!pendingTickets.length) {
+    showToast("Este cliente no tiene boletas pendientes.");
+    return;
+  }
+
+  pendingClientPaymentBuyer = buyer;
+
+  elements.clientPaymentDetails.textContent =
+    `Cliente: ${buyer}. Boletas pendientes: ${pendingTickets.join(", ")}.`;
+
+  showDialog(elements.clientPaymentModal);
+}
+
+async function markClientTicketsAsPaid(buyer) {
+  if (!activeRaffle) return false;
+
+  const pendingTickets = tickets.filter(
+    (ticket) => ticket.buyer.trim() === buyer && !ticket.is_paid
+  );
+
+  if (!pendingTickets.length) {
+    showToast("Este cliente no tiene boletas pendientes.");
+    return false;
+  }
+
+  const { error } = await supabase
+    .from("tickets")
+    .update({ is_paid: true })
+    .eq("raffle_id", activeRaffle.id)
+    .eq("buyer", buyer)
+    .eq("is_paid", false);
+
+  if (error) {
+    showToast(`No se pudieron actualizar las boletas: ${error.message}`, true);
+    return false;
+  }
+
+  await loadTickets();
+  showToast(`Se marcaron ${pendingTickets.length} boleta(s) como pagadas.`);
+  return true;
+}
+
 elements.newRaffleButton.addEventListener("click", () => {
   requireAdmin(() => showDialog(elements.raffleModal));
 });
@@ -675,6 +775,25 @@ document.querySelectorAll("[data-close]").forEach((button) => {
   });
 });
 
+if (elements.clientPaymentForm) {
+  elements.clientPaymentForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    if (!pendingClientPaymentBuyer) return;
+
+    elements.confirmClientPaymentButton.disabled = true;
+
+    const completed = await markClientTicketsAsPaid(pendingClientPaymentBuyer);
+
+    elements.confirmClientPaymentButton.disabled = false;
+
+    if (completed) {
+      pendingClientPaymentBuyer = null;
+      closeDialog(elements.clientPaymentModal);
+    }
+  });
+}
+
 async function init() {
   updateLockButton();
 
@@ -689,5 +808,22 @@ async function init() {
   await loadRaffles();
   subscribeToRaffles();
 }
+
+elements.clientPaymentForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  if (!pendingClientPaymentBuyer) return;
+
+  elements.confirmClientPaymentButton.disabled = true;
+
+  const completed = await markClientTicketsAsPaid(pendingClientPaymentBuyer);
+
+  elements.confirmClientPaymentButton.disabled = false;
+
+  if (completed) {
+    pendingClientPaymentBuyer = null;
+    closeDialog(elements.clientPaymentModal);
+  }
+});
 
 init();

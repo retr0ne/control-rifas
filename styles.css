@@ -564,3 +564,38 @@ small, .helper-text {
     width: 100%;
   }
 }
+.client-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.client-line__text {
+  flex: 1;
+  min-width: 0;
+}
+
+.client-pay-button {
+  flex: 0 0 auto;
+  padding: 5px 8px;
+  color: var(--paid-text);
+  border: 1px solid #86efac;
+  border-radius: 7px;
+  background: #f0fdf4;
+  font-size: .7rem;
+  font-weight: 800;
+}
+
+.client-pay-button:hover {
+  background: #dcfce7;
+}
+.confirmation-summary {
+  margin: 0;
+  padding: 12px;
+  color: var(--text);
+  border-left: 4px solid var(--primary);
+  border-radius: 8px;
+  background: #eff6ff;
+  font-size: .88rem;
+  line-height: 1.55;
+}

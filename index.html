@@ -62,7 +62,7 @@
     </section>
 
     <div class="workspace-layout">
-        
+
   <section class="tickets-section">
     <div class="section-title">
       <div>
@@ -194,6 +194,33 @@
     </form>
   </dialog>
 
+<dialog id="clientPaymentModal" class="modal">
+  <form id="clientPaymentForm" class="modal__content modal__content--small">
+    <div class="modal__header">
+      <div>
+        <p class="eyebrow">Confirmar pago</p>
+        <h2>¿El cliente ya pagó?</h2>
+      </div>
+      <button class="icon-button" type="button" data-close="clientPaymentModal" aria-label="Cerrar">×</button>
+    </div>
+
+    <p id="clientPaymentDetails" class="confirmation-summary"></p>
+
+    <p class="helper-text">
+      Esta acción marcará como pagadas todas las boletas pendientes de este cliente.
+    </p>
+
+    <div class="modal__actions">
+      <button class="button button--ghost" type="button" data-close="clientPaymentModal">
+        Cancelar
+      </button>
+      <button id="confirmClientPaymentButton" class="button button--primary" type="submit">
+        Sí, marcar como pagado
+      </button>
+    </div>
+  </form>
+</dialog>
+
   <dialog id="pinModal" class="modal">
     <form id="pinForm" class="modal__content modal__content--small">
       <div class="modal__header">
@@ -218,6 +245,33 @@
       </div>
     </form>
   </dialog>
+
+  <dialog id="clientPaymentModal" class="modal">
+  <form id="clientPaymentForm" class="modal__content modal__content--small">
+    <div class="modal__header">
+      <div>
+        <p class="eyebrow">Confirmar pago</p>
+        <h2>¿El cliente ya pagó?</h2>
+      </div>
+      <button class="icon-button" type="button" data-close="clientPaymentModal" aria-label="Cerrar">×</button>
+    </div>
+
+    <p id="clientPaymentDetails" class="confirmation-summary"></p>
+
+    <p class="helper-text">
+      Se marcarán como pagadas todas las boletas pendientes de este cliente.
+    </p>
+
+    <div class="modal__actions">
+      <button class="button button--ghost" type="button" data-close="clientPaymentModal">
+        Cancelar
+      </button>
+      <button id="confirmClientPaymentButton" class="button button--primary" type="submit">
+        Sí, marcar como pagado
+      </button>
+    </div>
+  </form>
+</dialog>
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
