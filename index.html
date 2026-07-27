@@ -65,30 +65,22 @@
 
   <section class="tickets-section">
     <div class="section-title">
-      <div>
-        <p class="eyebrow">Boletas</p>
-        <h2>Números del 00 al 99</h2>
-      </div>
-
-      <div class="section-tools">
-        <button id="downloadImageButton" class="button button--ghost" type="button">
-          📷 Descargar Imagen (.jpg)
-        </button>
-
-        <div class="legend" aria-label="Estados">
-          <span><i class="dot dot--free"></i>Libre</span>
-          <span><i class="dot dot--pending"></i>Pendiente</span>
-          <span><i class="dot dot--paid"></i>Pagado</span>
-        </div>
-      </div>
+      <!-- Tu encabezado actual -->
     </div>
-
+    <span id="availableTicketsBadge" class="available-tickets-badge">
+    100 disponibles
+    </span>
+    <button id="downloadImageButton" class="button button--ghost" type="button">
+  📷 Guardar / Compartir imagen
+    </button>
     <div id="emptyState" class="empty-state">
       <h2>Selecciona o crea una rifa</h2>
       <p>Las 100 boletas aparecerán aquí cuando tengas una rifa activa.</p>
     </div>
-
-    <div id="ticketsGrid" class="tickets-grid" aria-live="polite"></div>
+    
+    <div class="tickets-grid-scroll">
+      <div id="ticketsGrid" class="tickets-grid" aria-live="polite"></div>
+    </div>
   </section>
 
   <aside class="clients-sidebar" aria-label="Clientes de la rifa">
@@ -106,6 +98,7 @@
 
     <ul id="clientsList" class="clients-list"></ul>
   </aside>
+
 </div>
   </main>
 
@@ -219,6 +212,7 @@
       </button>
     </div>
   </form>
+
 </dialog>
 
   <dialog id="pinModal" class="modal">
@@ -246,32 +240,7 @@
     </form>
   </dialog>
 
-  <dialog id="clientPaymentModal" class="modal">
-  <form id="clientPaymentForm" class="modal__content modal__content--small">
-    <div class="modal__header">
-      <div>
-        <p class="eyebrow">Confirmar pago</p>
-        <h2>¿El cliente ya pagó?</h2>
-      </div>
-      <button class="icon-button" type="button" data-close="clientPaymentModal" aria-label="Cerrar">×</button>
-    </div>
-
-    <p id="clientPaymentDetails" class="confirmation-summary"></p>
-
-    <p class="helper-text">
-      Se marcarán como pagadas todas las boletas pendientes de este cliente.
-    </p>
-
-    <div class="modal__actions">
-      <button class="button button--ghost" type="button" data-close="clientPaymentModal">
-        Cancelar
-      </button>
-      <button id="confirmClientPaymentButton" class="button button--primary" type="submit">
-        Sí, marcar como pagado
-      </button>
-    </div>
-  </form>
-</dialog>
+ 
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 

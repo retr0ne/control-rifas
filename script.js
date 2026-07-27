@@ -13,6 +13,8 @@ const supabase = createClient(CONFIG.supabaseUrl, CONFIG.supabaseAnonKey);
 const $ = (selector) => document.querySelector(selector);
 
 const elements = {
+  availableTicketsBadge: $("#availableTicketsBadge"),
+
   clientPaymentModal: $("#clientPaymentModal"),
   clientPaymentForm: $("#clientPaymentForm"),
   clientPaymentDetails: $("#clientPaymentDetails"),
@@ -150,24 +152,36 @@ function updateOverview() {
 
   if (!hasRaffle) {
     renderClients();
+    elements.availableTicketsBadge.textContent = "0 disponibles";
     return;
   }
 
   const price = Number(activeRaffle.ticket_price);
   const sold = tickets.length;
+  const available = 100 - sold;
   const paid = tickets.filter((ticket) => ticket.is_paid).length;
   const pending = sold - paid;
 
   elements.raffleTitle.textContent = activeRaffle.title;
   elements.drawDate.textContent = formatDate(activeRaffle.draw_date);
   elements.soldMetric.textContent = `${sold}/100`;
-  elements.availableMetric.textContent = String(100 - sold);
-  elements.paidMetric.textContent = money.format(paid * price);
+  elements.availableMetric.textContent = String(available);
+  elements.availableTicketsBadge.textContent = `${available} disponibles`;  elements.paidMetric.textContent = money.format(paid * price);
   elements.pendingMetric.textContent = money.format(pending * price);
 }
 }
 
 function renderTickets() {
+  const available = activeRaffle ? 100 - tickets.length : 0;
+
+  if (elements.availableTicketsBadge) {
+    elements.availableTicketsBadge.textContent = `${available} disponibles`;
+  }
+
+  elements.ticketsGrid.replaceChildren();
+
+  if (!activeRaffle) return;
+
   elements.ticketsGrid.replaceChildren();
 
   if (!activeRaffle) return;
@@ -297,7 +311,7 @@ if (
   });
 }
 
-function downloadRaffleImage() {
+async function downloadRaffleImage() {
   if (!activeRaffle) {
     showToast("Selecciona una rifa antes de descargar la imagen.", true);
     return;
@@ -378,21 +392,61 @@ function downloadRaffleImage() {
   context.fillText("Los números en gris ya no se encuentran disponibles.", padding, height - 28);
 
   const safeTitle = activeRaffle.title
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
+  .toLowerCase()
+  .normalize("NFD")
+  .replace(/[\u0300-\u036f]/g, "")
+  .replace(/[^a-z0-9]+/g, "-")
+  .replace(/^-|-$/g, "");
 
-  const link = document.createElement("a");
-  link.href = canvas.toDataURL("image/jpeg", 0.92);
-  link.download = `estado-rifa-${safeTitle || "rifa"}.jpg`;
+const fileName = `estado-rifa-${safeTitle || "rifa"}.jpg`;
 
-  document.body.append(link);
-  link.click();
-  link.remove();
+const imageBlob = await new Promise((resolve) => {
+  canvas.toBlob(resolve, "image/jpeg", 0.92);
+});
 
-  showToast("Imagen de disponibilidad descargada.");
+if (!imageBlob) {
+  showToast("No fue posible generar la imagen.", true);
+  return;
+}
+
+const imageFile = new File([imageBlob], fileName, {
+  type: "image/jpeg"
+});
+
+try {
+  // iPhone/iPad: abre la hoja nativa con “Guardar imagen” y “Guardar en Archivos”.
+  if (
+    navigator.share &&
+    navigator.canShare &&
+    navigator.canShare({ files: [imageFile] })
+  ) {
+    await navigator.share({
+      files: [imageFile],
+      title: activeRaffle.title,
+      text: "Estado de disponibilidad de la rifa"
+    });
+
+    showToast("Selecciona “Guardar imagen” o “Guardar en Archivos”.");
+    return;
+  }
+} catch (error) {
+  // El usuario cerró la hoja de compartir: no es un error.
+  if (error.name === "AbortError") return;
+}
+
+// Respaldo para computadores y navegadores sin compartir archivos.
+const imageUrl = URL.createObjectURL(imageBlob);
+const link = document.createElement("a");
+
+link.href = imageUrl;
+link.download = fileName;
+document.body.append(link);
+link.click();
+link.remove();
+
+setTimeout(() => URL.revokeObjectURL(imageUrl), 60000);
+
+showToast("Imagen descargada.");
 }
 
 async function loadRaffles(preferredId = null) {
