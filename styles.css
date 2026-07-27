@@ -304,8 +304,10 @@ h1 { margin-bottom: 0; font-size: clamp(1.5rem, 3vw, 2rem); }
 }
 
 .badge {
-  align-self: flex-start;
-  padding: 3px 7px;
+  align-self: center;
+  min-width: 72px;
+  padding: 4px 8px;
+  text-align: center;
   border-radius: 999px;
   font-size: .65rem;
   font-weight: 800;
