@@ -304,10 +304,8 @@ h1 { margin-bottom: 0; font-size: clamp(1.5rem, 3vw, 2rem); }
 }
 
 .badge {
-  align-self: center;
-  min-width: 72px;
-  padding: 4px 8px;
-  text-align: center;
+  align-self: flex-start;
+  padding: 3px 7px;
   border-radius: 999px;
   font-size: .65rem;
   font-weight: 800;
@@ -457,10 +455,32 @@ small, .helper-text {
   .draw-date { width: 100%; }
   .metrics { grid-template-columns: 1fr 1fr; }
   .section-title { align-items: flex-start; flex-direction: column; }
-  .tickets-grid { grid-template-columns: repeat(4, 1fr); gap: 8px; }
-  .ticket { min-height: 91px; padding: 9px; }
+
+.tickets-grid-scroll {
+  overflow-x: hidden;
+}
+
+.tickets-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  min-width: 0;
+  width: 100%;
+}
+
+.ticket {
+  min-width: 0;
+  min-height: 91px;
+  padding: 8px;
+}
+
   .ticket__number { font-size: 1.18rem; }
-  
+
+.badge {
+  align-self: flex-start;
+  min-width: 0;
+  padding: 3px 6px;
+  text-align: left;
+}
   
 }
 
@@ -635,4 +655,16 @@ small, .helper-text {
 
 #downloadImageButton {
   white-space: nowrap;
+}
+/* Solo equipos de escritorio con mouse; no afecta móviles táctiles. */
+@media (hover: hover) and (pointer: fine) {
+  .tickets-grid .ticket--pending > .badge,
+  .tickets-grid .ticket--paid > .badge {
+    display: flex !important;
+    align-self: stretch !important;
+    justify-content: center !important;
+    width: 100% !important;
+    padding: 4px 8px !important;
+    text-align: center !important;
+  }
 }
