@@ -292,17 +292,6 @@ h1 { margin-bottom: 0; font-size: clamp(1.5rem, 3vw, 2rem); }
   -webkit-box-orient: vertical;
 }
 
-.available-tickets-badge {
-  padding: 7px 10px;
-  color: var(--primary-dark);
-  border: 1px solid #bfdbfe;
-  border-radius: 999px;
-  background: #eff6ff;
-  font-size: .78rem;
-  font-weight: 800;
-  white-space: nowrap;
-}
-
 .badge {
   align-self: flex-start;
   padding: 3px 7px;
@@ -588,10 +577,6 @@ small, .helper-text {
   gap: 10px;
 }
 
-.available-tickets-badge {
-  justify-self: start;
-}
-
 #downloadImageButton {
   width: 100%;
 }
@@ -647,12 +632,6 @@ small, .helper-text {
   justify-content: flex-end;
 }
 
-.available-tickets-badge {
-  display: inline-flex;
-  align-items: center;
-  min-height: 42px;
-}
-
 #downloadImageButton {
   white-space: nowrap;
 }
@@ -666,5 +645,52 @@ small, .helper-text {
     width: 100% !important;
     padding: 4px 8px !important;
     text-align: center !important;
+  }
+}
+
+.clients-search {
+  display: block;
+  margin-top: 14px;
+}
+
+.clients-search input {
+  min-height: 38px;
+  padding: 8px 10px;
+  font-size: .82rem;
+}
+
+.raffle-heading > :first-child {
+  min-width: 0;
+}
+
+.raffle-heading .button--small {
+  margin-top: 10px;
+}
+
+.button--small {
+  min-height: 36px;
+  padding: 7px 10px;
+  font-size: .8rem;
+}
+
+.section-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+@media (max-width: 700px) {
+  .section-tools {
+    display: grid;
+    grid-template-columns: 1fr;
+    justify-content: stretch;
+  }
+
+  #downloadImageButton,
+  #editRaffleButton {
+    width: 100%;
   }
 }

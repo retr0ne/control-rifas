@@ -34,6 +34,9 @@
         <div>
           <p class="eyebrow">Rifa activa</p>
           <h1 id="raffleTitle">—</h1>
+          <button id="editRaffleButton" class="button button--ghost button--small" type="button">
+            Editar nombre
+          </button>
         </div>
         <div class="draw-date">
           <span>Fecha del sorteo</span>
@@ -65,14 +68,16 @@
 
   <section class="tickets-section">
     <div class="section-title">
-      <!-- Tu encabezado actual -->
+      <div>
+        <p class="eyebrow">Boletas</p>
+        <h2>Números del 00 al 99</h2>
+      </div>
     </div>
-    <span id="availableTicketsBadge" class="available-tickets-badge">
-    100 disponibles
-    </span>
+    <div class="section-tools">
     <button id="downloadImageButton" class="button button--ghost" type="button">
   📷 Guardar / Compartir imagen
     </button>
+    </div>
     <div id="emptyState" class="empty-state">
       <h2>Selecciona o crea una rifa</h2>
       <p>Las 100 boletas aparecerán aquí cuando tengas una rifa activa.</p>
@@ -91,6 +96,11 @@
       </div>
       <span id="clientsCount" class="clients-count">0</span>
     </div>
+
+    <label class="clients-search" for="clientsSearch">
+      <span class="sr-only">Buscar cliente</span>
+      <input id="clientsSearch" type="search" placeholder="Buscar cliente..." autocomplete="off" />
+    </label>
 
     <p id="clientsEmpty" class="clients-empty">
       Aún no hay boletas asignadas.
@@ -132,6 +142,26 @@
       <div class="modal__actions">
         <button class="button button--ghost" type="button" data-close="raffleModal">Cancelar</button>
         <button class="button button--primary" type="submit">Crear rifa</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="editRaffleModal" class="modal">
+    <form id="editRaffleForm" class="modal__content modal__content--small">
+      <div class="modal__header">
+        <div>
+          <p class="eyebrow">Configuración</p>
+          <h2>Editar nombre de rifa</h2>
+        </div>
+        <button class="icon-button" type="button" data-close="editRaffleModal" aria-label="Cerrar">×</button>
+      </div>
+      <label>
+        Nombre de la rifa
+        <input id="editRaffleName" type="text" maxlength="100" required />
+      </label>
+      <div class="modal__actions">
+        <button class="button button--ghost" type="button" data-close="editRaffleModal">Cancelar</button>
+        <button class="button button--primary" type="submit">Guardar nombre</button>
       </div>
     </form>
   </dialog>

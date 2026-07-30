@@ -13,8 +13,6 @@ const supabase = createClient(CONFIG.supabaseUrl, CONFIG.supabaseAnonKey);
 const $ = (selector) => document.querySelector(selector);
 
 const elements = {
-  availableTicketsBadge: $("#availableTicketsBadge"),
-
   clientPaymentModal: $("#clientPaymentModal"),
   clientPaymentForm: $("#clientPaymentForm"),
   clientPaymentDetails: $("#clientPaymentDetails"),
@@ -26,6 +24,10 @@ const elements = {
   raffleOverview: $("#raffleOverview"),
   raffleTitle: $("#raffleTitle"),
   drawDate: $("#drawDate"),
+  editRaffleButton: $("#editRaffleButton"),
+  editRaffleModal: $("#editRaffleModal"),
+  editRaffleForm: $("#editRaffleForm"),
+  editRaffleName: $("#editRaffleName"),
   soldMetric: $("#soldMetric"),
   availableMetric: $("#availableMetric"),
   paidMetric: $("#paidMetric"),
@@ -59,6 +61,7 @@ const elements = {
   clientsList: $("#clientsList"),
   clientsEmpty: $("#clientsEmpty"),
   clientsCount: $("#clientsCount"),
+  clientsSearch: $("#clientsSearch"),
 };
 
 let pendingClientPaymentBuyer = null;
@@ -144,15 +147,14 @@ function setActiveRaffle(raffleId) {
 }
 
 function updateOverview() {
-  function updateOverview() {
   const hasRaffle = Boolean(activeRaffle);
 
   elements.raffleOverview.hidden = !hasRaffle;
   elements.emptyState.hidden = hasRaffle;
+  elements.editRaffleButton.hidden = !hasRaffle;
 
   if (!hasRaffle) {
     renderClients();
-    elements.availableTicketsBadge.textContent = "0 disponibles";
     return;
   }
 
@@ -166,22 +168,11 @@ function updateOverview() {
   elements.drawDate.textContent = formatDate(activeRaffle.draw_date);
   elements.soldMetric.textContent = `${sold}/100`;
   elements.availableMetric.textContent = String(available);
-  elements.availableTicketsBadge.textContent = `${available} disponibles`;  elements.paidMetric.textContent = money.format(paid * price);
+  elements.paidMetric.textContent = money.format(paid * price);
   elements.pendingMetric.textContent = money.format(pending * price);
-}
 }
 
 function renderTickets() {
-  const available = activeRaffle ? 100 - tickets.length : 0;
-
-  if (elements.availableTicketsBadge) {
-    elements.availableTicketsBadge.textContent = `${available} disponibles`;
-  }
-
-  elements.ticketsGrid.replaceChildren();
-
-  if (!activeRaffle) return;
-
   elements.ticketsGrid.replaceChildren();
 
   if (!activeRaffle) return;
@@ -231,8 +222,7 @@ function renderTickets() {
 }
 
 function renderClients() {
-  elements.clientsList.replaceChildren();
-if (
+  if (
     !elements.clientsList ||
     !elements.clientsEmpty ||
     !elements.clientsCount
@@ -247,14 +237,6 @@ if (
     elements.clientsCount.textContent = "0";
     return;
   }
-
-
-  if (!activeRaffle || !tickets.length) {
-    elements.clientsEmpty.hidden = false;
-    elements.clientsCount.textContent = "0";
-    return;
-  }
-
   const groupedClients = new Map();
 
   tickets
@@ -278,10 +260,18 @@ if (
       }
     });
 
-  elements.clientsEmpty.hidden = groupedClients.size > 0;
-  elements.clientsCount.textContent = String(groupedClients.size);
+  const searchTerm = elements.clientsSearch.value.trim().toLocaleLowerCase("es-CO");
+  const visibleClients = [...groupedClients].filter(([buyer]) =>
+    buyer.toLocaleLowerCase("es-CO").includes(searchTerm)
+  );
 
-  groupedClients.forEach((client, buyer) => {
+  elements.clientsEmpty.hidden = visibleClients.length > 0;
+  elements.clientsEmpty.textContent = searchTerm
+    ? "No se encontraron clientes con ese nombre."
+    : "Aún no hay boletas asignadas.";
+  elements.clientsCount.textContent = String(visibleClients.length);
+
+  visibleClients.forEach(([buyer, client]) => {
     const item = document.createElement("li");
     item.className = "client-line";
 
@@ -638,6 +628,48 @@ async function createRaffle(event) {
   showToast("Rifa creada correctamente.");
 }
 
+function openEditRaffleModal() {
+  if (!activeRaffle) {
+    showToast("Selecciona una rifa primero.", true);
+    return;
+  }
+
+  elements.editRaffleName.value = activeRaffle.title;
+  showDialog(elements.editRaffleModal);
+
+  setTimeout(() => {
+    elements.editRaffleName.focus();
+    elements.editRaffleName.select();
+  }, 100);
+}
+
+async function saveRaffleName(event) {
+  event.preventDefault();
+
+  if (!activeRaffle) return;
+
+  const title = elements.editRaffleName.value.trim();
+
+  if (!title) {
+    showToast("Ingresa un nombre para la rifa.", true);
+    return;
+  }
+
+  const { error } = await supabase
+    .from("raffles")
+    .update({ title })
+    .eq("id", activeRaffle.id);
+
+  if (error) {
+    showToast(`No se pudo actualizar el nombre: ${error.message}`, true);
+    return;
+  }
+
+  closeDialog(elements.editRaffleModal);
+  await loadRaffles(activeRaffle.id);
+  showToast("Nombre de la rifa actualizado.");
+}
+
 async function saveTicket(event) {
   event.preventDefault();
 
@@ -795,6 +827,11 @@ elements.raffleSelect.addEventListener("change", (event) => {
 });
 
 elements.raffleForm.addEventListener("submit", createRaffle);
+elements.clientsSearch.addEventListener("input", renderClients);
+elements.editRaffleButton.addEventListener("click", () => {
+  requireAdmin(openEditRaffleModal);
+});
+elements.editRaffleForm.addEventListener("submit", saveRaffleName);
 elements.ticketForm.addEventListener("submit", saveTicket);
 elements.deleteTicketButton.addEventListener("click", deleteTicket);
 elements.downloadImageButton.addEventListener("click", downloadRaffleImage);
@@ -862,22 +899,5 @@ async function init() {
   await loadRaffles();
   subscribeToRaffles();
 }
-
-elements.clientPaymentForm.addEventListener("submit", async (event) => {
-  event.preventDefault();
-
-  if (!pendingClientPaymentBuyer) return;
-
-  elements.confirmClientPaymentButton.disabled = true;
-
-  const completed = await markClientTicketsAsPaid(pendingClientPaymentBuyer);
-
-  elements.confirmClientPaymentButton.disabled = false;
-
-  if (completed) {
-    pendingClientPaymentBuyer = null;
-    closeDialog(elements.clientPaymentModal);
-  }
-});
 
 init();
