@@ -343,7 +343,7 @@ async function downloadRaffleImage() {
   const canvas = document.createElement("canvas");
   const context = canvas.getContext("2d");
   const width = 1200;
-  const height = 2050;
+  const height = 2130;
   const gridX = 84;
   const gridY = 505;
   const gridWidth = width - (gridX * 2);
@@ -363,15 +363,13 @@ async function downloadRaffleImage() {
   context.fillStyle = palette.ink;
   context.textAlign = "center";
   context.textBaseline = "middle";
-  context.font = "900 29px 'Arial Rounded MT Bold', 'Trebuchet MS', Arial, sans-serif";
-  context.fillText("ESTADO DE DISPONIBILIDAD", width / 2, 135);
   drawFittedText(
     context,
     activeRaffle.title.toUpperCase(),
     width / 2,
-    208,
+    190,
     620,
-    74,
+    82,
     "900",
     "'Arial Rounded MT Bold', 'Trebuchet MS', Arial, sans-serif",
     palette.ink
@@ -380,21 +378,16 @@ async function downloadRaffleImage() {
   context.strokeStyle = palette.accent;
   context.lineWidth = 4;
   context.beginPath();
-  context.moveTo(360, 259);
-  context.lineTo(840, 259);
+  context.moveTo(360, 270);
+  context.lineTo(840, 270);
   context.stroke();
 
   context.fillStyle = palette.accent;
   context.beginPath();
-  context.arc(width / 2, 259, 7, 0, Math.PI * 2);
+  context.arc(width / 2, 270, 7, 0, Math.PI * 2);
   context.fill();
-
-  context.font = "700 24px 'Trebuchet MS', Arial, sans-serif";
-  context.fillStyle = palette.inkSoft;
-  context.fillText(formatDate(activeRaffle.draw_date), width / 2, 307);
-  drawFittedText(context, `Lotería: ${activeRaffle.lottery || "Por definir"}`, width / 2, 352, 720, 24, "800", "'Trebuchet MS', Arial, sans-serif", palette.inkSoft);
-  drawHeaderBurst(context, 205, 218, palette.accent, -1);
-  drawHeaderBurst(context, 995, 218, palette.accent, 1);
+  drawHeaderBurst(context, 205, 205, palette.accent, -1);
+  drawHeaderBurst(context, 995, 205, palette.accent, 1);
 
   context.fillStyle = palette.gridShadow;
   roundedRect(context, gridX + 12, gridY + 14, gridWidth, gridWidth, 18);
@@ -433,29 +426,32 @@ async function downloadRaffleImage() {
   }
 
   context.fillStyle = palette.card;
-  roundedRect(context, 116, 1590, 968, 185, 54);
+  roundedRect(context, 116, 1582, 968, 246, 54);
   context.fill();
   context.strokeStyle = palette.ink;
   context.lineWidth = 4;
-  roundedRect(context, 132, 1606, 936, 153, 44);
+  roundedRect(context, 132, 1598, 936, 214, 44);
   context.stroke();
 
   context.fillStyle = palette.ink;
-  context.font = "800 43px Arial, sans-serif";
-  context.fillText(`¡Quedan ${available} números disponibles!`, width / 2, 1662);
-  context.font = "600 27px Arial, sans-serif";
+  context.font = "800 42px 'Arial Rounded MT Bold', 'Trebuchet MS', Arial, sans-serif";
+  context.fillText(`¡Quedan ${available} números disponibles!`, width / 2, 1650);
+  context.font = "700 25px 'Trebuchet MS', Arial, sans-serif";
   context.fillStyle = palette.inkSoft;
-  context.fillText("Los números coloreados ya fueron asignados.", width / 2, 1713);
+  context.fillText(`Sorteo: ${formatDate(activeRaffle.draw_date)}`, width / 2, 1704);
+  drawFittedText(context, `Lotería: ${activeRaffle.lottery || "Por definir"}`, width / 2, 1747, 790, 25, "800", "'Trebuchet MS', Arial, sans-serif", palette.inkSoft);
+  context.font = "600 22px Arial, sans-serif";
+  context.fillText("Los números coloreados ya fueron asignados.", width / 2, 1787);
 
   context.fillStyle = palette.priceCard;
-  roundedRect(context, 178, 1822, 844, 122, 48);
+  roundedRect(context, 178, 1865, 844, 122, 48);
   context.fill();
   context.fillStyle = palette.priceText;
   context.font = "800 53px Georgia, serif";
-  context.fillText(`Valor por boleta: ${money.format(Number(activeRaffle.ticket_price))}`, width / 2, 1884);
+  context.fillText(`Valor por boleta: ${money.format(Number(activeRaffle.ticket_price))}`, width / 2, 1927);
   context.font = "800 28px Arial, sans-serif";
   context.fillStyle = palette.priceText;
-  context.fillText("¡Participa y gana!", width / 2, 1995);
+  context.fillText("¡Participa y gana!", width / 2, 2060);
 
   const safeTitle = activeRaffle.title
   .toLowerCase()
