@@ -357,21 +357,44 @@ async function downloadRaffleImage() {
   drawRaffleBackground(context, width, height, palette);
 
   context.fillStyle = palette.card;
-  roundedRect(context, 120, 104, 960, 260, 54);
+  roundedRect(context, 90, 76, 1020, 348, 62);
   context.fill();
 
   context.fillStyle = palette.ink;
   context.textAlign = "center";
   context.textBaseline = "middle";
-  context.font = "800 38px Georgia, serif";
-  context.fillText("GRAN RIFA", width / 2, 166);
-  drawFittedText(context, activeRaffle.title.toUpperCase(), width / 2, 245, 760, 82, "800", "Georgia, serif", palette.ink);
-  context.font = "600 25px Arial, sans-serif";
+  context.font = "900 29px 'Arial Rounded MT Bold', 'Trebuchet MS', Arial, sans-serif";
+  context.fillText("ESTADO DE DISPONIBILIDAD", width / 2, 135);
+  drawFittedText(
+    context,
+    activeRaffle.title.toUpperCase(),
+    width / 2,
+    208,
+    620,
+    74,
+    "900",
+    "'Arial Rounded MT Bold', 'Trebuchet MS', Arial, sans-serif",
+    palette.ink
+  );
+
+  context.strokeStyle = palette.accent;
+  context.lineWidth = 4;
+  context.beginPath();
+  context.moveTo(360, 259);
+  context.lineTo(840, 259);
+  context.stroke();
+
+  context.fillStyle = palette.accent;
+  context.beginPath();
+  context.arc(width / 2, 259, 7, 0, Math.PI * 2);
+  context.fill();
+
+  context.font = "700 24px 'Trebuchet MS', Arial, sans-serif";
   context.fillStyle = palette.inkSoft;
-  context.fillText(formatDate(activeRaffle.draw_date), width / 2, 292);
-  drawFittedText(context, `Lotería: ${activeRaffle.lottery || "Por definir"}`, width / 2, 328, 790, 22, "700", "Arial, sans-serif", palette.inkSoft);
-  drawBurst(context, 226, 233, palette.accent, -1);
-  drawBurst(context, 974, 233, palette.accent, 1);
+  context.fillText(formatDate(activeRaffle.draw_date), width / 2, 307);
+  drawFittedText(context, `Lotería: ${activeRaffle.lottery || "Por definir"}`, width / 2, 352, 720, 24, "800", "'Trebuchet MS', Arial, sans-serif", palette.inkSoft);
+  drawHeaderBurst(context, 205, 218, palette.accent, -1);
+  drawHeaderBurst(context, 995, 218, palette.accent, 1);
 
   context.fillStyle = palette.gridShadow;
   roundedRect(context, gridX + 12, gridY + 14, gridWidth, gridWidth, 18);
@@ -537,14 +560,15 @@ function drawFittedText(context, text, x, y, maxWidth, maxSize, weight, family, 
   context.fillText(text, x, y);
 }
 
-function drawBurst(context, x, y, color, direction) {
+function drawHeaderBurst(context, x, y, color, direction) {
   context.strokeStyle = color;
   context.lineWidth = 12;
   context.lineCap = "round";
-  [-55, -25, 5, 35, 65].forEach((offset) => {
+
+  [-38, -14, 14, 38].forEach((offset) => {
     context.beginPath();
     context.moveTo(x, y + offset);
-    context.lineTo(x + (direction * 70), y + (offset * 1.45));
+    context.lineTo(x + (direction * 68), y + (offset * 1.55));
     context.stroke();
   });
 }
