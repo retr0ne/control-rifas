@@ -343,7 +343,7 @@ async function downloadRaffleImage() {
   const canvas = document.createElement("canvas");
   const context = canvas.getContext("2d");
   const width = 1200;
-  const height = 1800;
+  const height = 2050;
   const gridX = 84;
   const gridY = 505;
   const gridWidth = width - (gridX * 2);
@@ -410,26 +410,29 @@ async function downloadRaffleImage() {
   }
 
   context.fillStyle = palette.card;
-  roundedRect(context, 116, 1210, 968, 210, 54);
+  roundedRect(context, 116, 1590, 968, 185, 54);
   context.fill();
   context.strokeStyle = palette.ink;
   context.lineWidth = 4;
-  roundedRect(context, 132, 1226, 936, 178, 44);
+  roundedRect(context, 132, 1606, 936, 153, 44);
   context.stroke();
 
   context.fillStyle = palette.ink;
-  context.font = "800 46px Arial, sans-serif";
-  context.fillText(`¡Quedan ${available} números disponibles!`, width / 2, 1297);
+  context.font = "800 43px Arial, sans-serif";
+  context.fillText(`¡Quedan ${available} números disponibles!`, width / 2, 1662);
   context.font = "600 27px Arial, sans-serif";
   context.fillStyle = palette.inkSoft;
-  context.fillText("Los números coloreados ya fueron asignados.", width / 2, 1350);
+  context.fillText("Los números coloreados ya fueron asignados.", width / 2, 1713);
 
-  context.fillStyle = palette.ink;
-  context.font = "800 36px Georgia, serif";
-  context.fillText(`Valor: ${money.format(Number(activeRaffle.ticket_price))}`, width / 2, 1510);
-  context.font = "700 24px Arial, sans-serif";
-  context.fillStyle = palette.inkSoft;
-  context.fillText("¡Participa y gana!", width / 2, 1560);
+  context.fillStyle = palette.priceCard;
+  roundedRect(context, 178, 1822, 844, 122, 48);
+  context.fill();
+  context.fillStyle = palette.priceText;
+  context.font = "800 53px Georgia, serif";
+  context.fillText(`Valor por boleta: ${money.format(Number(activeRaffle.ticket_price))}`, width / 2, 1884);
+  context.font = "800 28px Arial, sans-serif";
+  context.fillStyle = palette.priceText;
+  context.fillText("¡Participa y gana!", width / 2, 1995);
 
   const safeTitle = activeRaffle.title
   .toLowerCase()
@@ -454,8 +457,12 @@ const imageFile = new File([imageBlob], fileName, {
 });
 
 try {
-  // iPhone/iPad: abre la hoja nativa con “Guardar imagen” y “Guardar en Archivos”.
+  const isMobileDevice = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
+    || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+
+  // Solo móviles usan la hoja nativa para poder guardar en Fotos o Archivos.
   if (
+    isMobileDevice &&
     navigator.share &&
     navigator.canShare &&
     navigator.canShare({ files: [imageFile] })
@@ -492,13 +499,13 @@ showToast("Imagen descargada.");
 function getImagePalette(template) {
   const templates = {
     warm: {
-      background: "#f5837f", card: "#ffc15a", ink: "#592417", inkSoft: "#783820",
+      background: "#f5837f", card: "#ffc15a", ink: "#592417", inkSoft: "#783820", priceCard: "#592417", priceText: "#fffaf1",
       accent: "#d85a35", blob: "#efa0c9", blobAlt: "#5591ad", gridBorder: "#3a211a",
       gridShadow: "rgba(89, 36, 23, .28)", free: "#fffdf8", number: "#27201c",
       sold: "#efa0c9", soldBorder: "#7a3158", soldText: "#522039", soldMark: "#b75576"
     },
     blue: {
-      background: "#125ba7", card: "#9ce1ff", ink: "#0b3265", inkSoft: "#135387",
+      background: "#125ba7", card: "#9ce1ff", ink: "#0b3265", inkSoft: "#135387", priceCard: "#082f61", priceText: "#effaff",
       accent: "#0b4a8b", blob: "#55c6f4", blobAlt: "#bdeeff", gridBorder: "#0c396b",
       gridShadow: "rgba(5, 38, 82, .34)", free: "#f8fdff", number: "#123b6b",
       sold: "#b9e8ff", soldBorder: "#2079b9", soldText: "#0c4a7f", soldMark: "#4e9ed0"
