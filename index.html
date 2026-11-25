@@ -139,6 +139,29 @@
         <input id="raffleDate" name="drawDate" type="datetime-local" required />
       </label>
 
+      <fieldset class="template-picker">
+        <legend>Plantilla para imagen de clientes</legend>
+        <p class="helper-text">Puedes elegir el estilo que acompañará el estado de la rifa.</p>
+        <div class="template-options">
+          <label class="template-option template-option--warm">
+            <input type="radio" name="imageTemplate" value="warm" checked />
+            <span class="template-preview" aria-hidden="true"><i></i><b></b></span>
+            <span class="template-option__copy">
+              <strong>Cálida</strong>
+              <small>Coral, rosa y amarillo</small>
+            </span>
+          </label>
+          <label class="template-option template-option--blue">
+            <input type="radio" name="imageTemplate" value="blue" />
+            <span class="template-preview" aria-hidden="true"><i></i><b></b></span>
+            <span class="template-option__copy">
+              <strong>Azul</strong>
+              <small>Azules intensos y celestes</small>
+            </span>
+          </label>
+        </div>
+      </fieldset>
+
       <div class="modal__actions">
         <button class="button button--ghost" type="button" data-close="raffleModal">Cancelar</button>
         <button class="button button--primary" type="submit">Crear rifa</button>

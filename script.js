@@ -307,79 +307,96 @@ async function downloadRaffleImage() {
     return;
   }
 
+  const palette = getImagePalette(activeRaffle.image_template);
   const canvas = document.createElement("canvas");
   const context = canvas.getContext("2d");
-
   const width = 1200;
-  const padding = 60;
-  const headerHeight = 190;
-  const gap = 10;
-  const columns = 10;
-  const cellSize = (width - (padding * 2) - (gap * (columns - 1))) / columns;
-  const height = headerHeight + padding + (cellSize * 10) + (gap * 9) + 70;
+  const height = 1800;
+  const gridX = 84;
+  const gridY = 505;
+  const gridWidth = width - (gridX * 2);
+  const cellSize = gridWidth / 10;
+  const sold = tickets.length;
+  const available = 100 - sold;
 
   canvas.width = width;
   canvas.height = height;
 
-  // Fondo
-  context.fillStyle = "#f5f7fb";
-  context.fillRect(0, 0, width, height);
+  drawRaffleBackground(context, width, height, palette);
 
-  // Encabezado
-  context.fillStyle = "#182230";
-  context.fillRect(0, 0, width, headerHeight);
+  context.fillStyle = palette.card;
+  roundedRect(context, 120, 104, 960, 260, 54);
+  context.fill();
 
-  context.fillStyle = "#ffffff";
-  context.font = "bold 42px Arial, sans-serif";
-  context.fillText(activeRaffle.title, padding, 72);
+  context.fillStyle = palette.ink;
+  context.textAlign = "center";
+  context.textBaseline = "middle";
+  context.font = "800 38px Georgia, serif";
+  context.fillText("GRAN RIFA", width / 2, 166);
+  drawFittedText(context, activeRaffle.title.toUpperCase(), width / 2, 245, 760, 82, "800", "Georgia, serif", palette.ink);
+  context.font = "600 25px Arial, sans-serif";
+  context.fillStyle = palette.inkSoft;
+  context.fillText(formatDate(activeRaffle.draw_date), width / 2, 310);
+  drawBurst(context, 226, 233, palette.accent, -1);
+  drawBurst(context, 974, 233, palette.accent, 1);
 
-  context.fillStyle = "#cbd5e1";
-  context.font = "24px Arial, sans-serif";
-  context.fillText(`Sorteo: ${formatDate(activeRaffle.draw_date)}`, padding, 116);
-
-  context.fillStyle = "#93c5fd";
-  context.font = "bold 20px Arial, sans-serif";
-  context.fillText("Números disponibles", padding, 155);
+  context.fillStyle = palette.gridShadow;
+  roundedRect(context, gridX + 12, gridY + 14, gridWidth, gridWidth, 18);
+  context.fill();
+  context.fillStyle = palette.gridBorder;
+  roundedRect(context, gridX, gridY, gridWidth, gridWidth, 18);
+  context.fill();
 
   for (let index = 0; index < 100; index += 1) {
     const number = String(index).padStart(2, "0");
     const ticket = ticketMap.get(number);
+    const column = index % 10;
+    const row = Math.floor(index / 10);
+    const x = gridX + (column * cellSize) + 3;
+    const y = gridY + (row * cellSize) + 3;
+    const size = cellSize - 6;
 
-    const column = index % columns;
-    const row = Math.floor(index / columns);
-    const x = padding + column * (cellSize + gap);
-    const y = headerHeight + 30 + row * (cellSize + gap);
-
-    // Estado visual: libre o ya asignado.
-    context.fillStyle = ticket ? "#cbd5e1" : "#ffffff";
-    context.fillRect(x, y, cellSize, cellSize);
-
-    context.strokeStyle = ticket ? "#94a3b8" : "#d0d5dd";
+    context.fillStyle = ticket ? palette.sold : palette.free;
+    context.fillRect(x, y, size, size);
+    context.strokeStyle = ticket ? palette.soldBorder : palette.gridBorder;
     context.lineWidth = 2;
-    context.strokeRect(x, y, cellSize, cellSize);
+    context.strokeRect(x, y, size, size);
 
     if (ticket) {
-      // Línea diagonal para reforzar visualmente que no está disponible.
-      context.strokeStyle = "#94a3b8";
-      context.lineWidth = 5;
+      context.strokeStyle = palette.soldMark;
+      context.lineWidth = 4;
       context.beginPath();
-      context.moveTo(x + 12, y + 12);
-      context.lineTo(x + cellSize - 12, y + cellSize - 12);
+      context.moveTo(x + 13, y + 13);
+      context.lineTo(x + size - 13, y + size - 13);
       context.stroke();
     }
 
-    context.fillStyle = ticket ? "#64748b" : "#111827";
-    context.font = `bold ${ticket ? 30 : 34}px Arial, sans-serif`;
-    context.textAlign = "center";
-    context.textBaseline = "middle";
-    context.fillText(number, x + (cellSize / 2), y + (cellSize / 2));
+    context.fillStyle = ticket ? palette.soldText : palette.number;
+    context.font = `700 ${ticket ? 29 : 31}px Arial, sans-serif`;
+    context.fillText(number, x + (size / 2), y + (size / 2) + 2);
   }
 
-  context.textAlign = "left";
-  context.textBaseline = "alphabetic";
-  context.fillStyle = "#667085";
-  context.font = "18px Arial, sans-serif";
-  context.fillText("Los números en gris ya no se encuentran disponibles.", padding, height - 28);
+  context.fillStyle = palette.card;
+  roundedRect(context, 116, 1210, 968, 210, 54);
+  context.fill();
+  context.strokeStyle = palette.ink;
+  context.lineWidth = 4;
+  roundedRect(context, 132, 1226, 936, 178, 44);
+  context.stroke();
+
+  context.fillStyle = palette.ink;
+  context.font = "800 46px Arial, sans-serif";
+  context.fillText(`¡Quedan ${available} números disponibles!`, width / 2, 1297);
+  context.font = "600 27px Arial, sans-serif";
+  context.fillStyle = palette.inkSoft;
+  context.fillText("Los números coloreados ya fueron asignados.", width / 2, 1350);
+
+  context.fillStyle = palette.ink;
+  context.font = "800 36px Georgia, serif";
+  context.fillText(`Valor: ${money.format(Number(activeRaffle.ticket_price))}`, width / 2, 1510);
+  context.font = "700 24px Arial, sans-serif";
+  context.fillStyle = palette.inkSoft;
+  context.fillText("¡Participa y gana!", width / 2, 1560);
 
   const safeTitle = activeRaffle.title
   .toLowerCase()
@@ -437,6 +454,86 @@ link.remove();
 setTimeout(() => URL.revokeObjectURL(imageUrl), 60000);
 
 showToast("Imagen descargada.");
+}
+
+function getImagePalette(template) {
+  const templates = {
+    warm: {
+      background: "#f5837f", card: "#ffc15a", ink: "#592417", inkSoft: "#783820",
+      accent: "#d85a35", blob: "#efa0c9", blobAlt: "#5591ad", gridBorder: "#3a211a",
+      gridShadow: "rgba(89, 36, 23, .28)", free: "#fffdf8", number: "#27201c",
+      sold: "#efa0c9", soldBorder: "#7a3158", soldText: "#522039", soldMark: "#b75576"
+    },
+    blue: {
+      background: "#125ba7", card: "#9ce1ff", ink: "#0b3265", inkSoft: "#135387",
+      accent: "#0b4a8b", blob: "#55c6f4", blobAlt: "#bdeeff", gridBorder: "#0c396b",
+      gridShadow: "rgba(5, 38, 82, .34)", free: "#f8fdff", number: "#123b6b",
+      sold: "#b9e8ff", soldBorder: "#2079b9", soldText: "#0c4a7f", soldMark: "#4e9ed0"
+    }
+  };
+
+  return templates[template] || templates.warm;
+}
+
+function roundedRect(context, x, y, width, height, radius) {
+  const r = Math.min(radius, width / 2, height / 2);
+  context.beginPath();
+  context.moveTo(x + r, y);
+  context.arcTo(x + width, y, x + width, y + height, r);
+  context.arcTo(x + width, y + height, x, y + height, r);
+  context.arcTo(x, y + height, x, y, r);
+  context.arcTo(x, y, x + width, y, r);
+  context.closePath();
+}
+
+function drawFittedText(context, text, x, y, maxWidth, maxSize, weight, family, color) {
+  let size = maxSize;
+  do {
+    context.font = `${weight} ${size}px ${family}`;
+    size -= 2;
+  } while (context.measureText(text).width > maxWidth && size > 24);
+
+  context.fillStyle = color;
+  context.fillText(text, x, y);
+}
+
+function drawBurst(context, x, y, color, direction) {
+  context.strokeStyle = color;
+  context.lineWidth = 12;
+  context.lineCap = "round";
+  [-55, -25, 5, 35, 65].forEach((offset) => {
+    context.beginPath();
+    context.moveTo(x, y + offset);
+    context.lineTo(x + (direction * 70), y + (offset * 1.45));
+    context.stroke();
+  });
+}
+
+function drawRaffleBackground(context, width, height, palette) {
+  context.fillStyle = palette.background;
+  context.fillRect(0, 0, width, height);
+
+  const blobs = [
+    [850, 50, 480, palette.blob], [70, 1240, 480, palette.card],
+    [1080, 1480, 420, palette.card], [30, 370, 180, palette.blobAlt],
+    [1140, 700, 180, palette.blobAlt], [270, 1670, 220, palette.blob]
+  ];
+  blobs.forEach(([x, y, size, color]) => {
+    context.fillStyle = color;
+    context.beginPath();
+    context.arc(x, y, size / 2, 0, Math.PI * 2);
+    context.fill();
+  });
+
+  context.strokeStyle = palette.card;
+  context.lineWidth = 30;
+  context.lineCap = "round";
+  [[70, 95, 160, 20], [1010, 120, 1130, 45], [40, 1580, 150, 1650], [1000, 1680, 1130, 1740]].forEach(([x1, y1, x2, y2]) => {
+    context.beginPath();
+    context.moveTo(x1, y1);
+    context.lineTo(x2, y2);
+    context.stroke();
+  });
 }
 
 async function loadRaffles(preferredId = null) {
@@ -604,6 +701,7 @@ async function createRaffle(event) {
   const title = elements.raffleName.value.trim();
   const ticketPrice = Number(elements.rafflePrice.value);
   const drawDate = elements.raffleDate.value;
+  const imageTemplate = new FormData(elements.raffleForm).get("imageTemplate") || "warm";
 
   if (!title || !ticketPrice || !drawDate) return;
 
@@ -612,12 +710,17 @@ async function createRaffle(event) {
     .insert({
       title,
       ticket_price: ticketPrice,
-      draw_date: new Date(drawDate).toISOString()
+      draw_date: new Date(drawDate).toISOString(),
+      image_template: imageTemplate
     })
     .select()
     .single();
 
   if (error) {
+    if (error.message?.includes("image_template")) {
+      showToast("Antes de crear rifas con plantilla, ejecuta supabase-image-template-migration.sql en Supabase.", true);
+      return;
+    }
     showToast(`No se pudo crear la rifa: ${error.message}`, true);
     return;
   }
