@@ -343,13 +343,11 @@ async function downloadRaffleImage() {
   const canvas = document.createElement("canvas");
   const context = canvas.getContext("2d");
   const width = 1200;
-  const height = 2130;
+  const height = 2000;
   const gridX = 84;
   const gridY = 505;
   const gridWidth = width - (gridX * 2);
   const cellSize = gridWidth / 10;
-  const sold = tickets.length;
-  const available = 100 - sold;
 
   canvas.width = width;
   canvas.height = height;
@@ -386,6 +384,21 @@ async function downloadRaffleImage() {
   context.beginPath();
   context.arc(width / 2, 270, 7, 0, Math.PI * 2);
   context.fill();
+
+  context.font = "700 29px 'Trebuchet MS', Arial, sans-serif";
+  context.fillStyle = palette.inkSoft;
+  context.fillText(formatDate(activeRaffle.draw_date), width / 2, 308);
+  drawFittedText(
+    context,
+    `Lotería: ${activeRaffle.lottery || "Por definir"}`,
+    width / 2,
+    354,
+    790,
+    28,
+    "800",
+    "'Trebuchet MS', Arial, sans-serif",
+    palette.inkSoft
+  );
   drawHeaderBurst(context, 205, 205, palette.accent, -1);
   drawHeaderBurst(context, 995, 205, palette.accent, 1);
 
@@ -425,33 +438,26 @@ async function downloadRaffleImage() {
     context.fillText(number, x + (size / 2), y + (size / 2) + 2);
   }
 
-  context.fillStyle = palette.card;
-  roundedRect(context, 116, 1582, 968, 246, 54);
-  context.fill();
-  context.strokeStyle = palette.ink;
-  context.lineWidth = 4;
-  roundedRect(context, 132, 1598, 936, 214, 44);
-  context.stroke();
-
-  context.fillStyle = palette.ink;
-  context.font = "800 42px 'Arial Rounded MT Bold', 'Trebuchet MS', Arial, sans-serif";
-  context.fillText(`¡Quedan ${available} números disponibles!`, width / 2, 1650);
-  context.font = "700 25px 'Trebuchet MS', Arial, sans-serif";
-  context.fillStyle = palette.inkSoft;
-  context.fillText(`Sorteo: ${formatDate(activeRaffle.draw_date)}`, width / 2, 1704);
-  drawFittedText(context, `Lotería: ${activeRaffle.lottery || "Por definir"}`, width / 2, 1747, 790, 25, "800", "'Trebuchet MS', Arial, sans-serif", palette.inkSoft);
-  context.font = "600 22px Arial, sans-serif";
-  context.fillText("Los números coloreados ya fueron asignados.", width / 2, 1787);
-
   context.fillStyle = palette.priceCard;
-  roundedRect(context, 178, 1865, 844, 122, 48);
+  roundedRect(context, 178, 1600, 844, 170, 48);
   context.fill();
   context.fillStyle = palette.priceText;
-  context.font = "800 53px Georgia, serif";
-  context.fillText(`Valor por boleta: ${money.format(Number(activeRaffle.ticket_price))}`, width / 2, 1927);
+  context.font = "800 27px 'Trebuchet MS', Arial, sans-serif";
+  context.fillText("VALOR POR BOLETA", width / 2, 1652);
+  drawFittedText(
+    context,
+    money.format(Number(activeRaffle.ticket_price)),
+    width / 2,
+    1722,
+    690,
+    64,
+    "900",
+    "'Arial Rounded MT Bold', 'Trebuchet MS', Arial, sans-serif",
+    palette.priceText
+  );
   context.font = "800 28px Arial, sans-serif";
   context.fillStyle = palette.priceText;
-  context.fillText("¡Participa y gana!", width / 2, 2060);
+  context.fillText("¡Participa y gana!", width / 2, 1885);
 
   const safeTitle = activeRaffle.title
   .toLowerCase()
