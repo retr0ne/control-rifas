@@ -28,6 +28,11 @@ const elements = {
   editRaffleModal: $("#editRaffleModal"),
   editRaffleForm: $("#editRaffleForm"),
   editRaffleName: $("#editRaffleName"),
+  finishRaffleButton: $("#finishRaffleButton"),
+  finishRaffleModal: $("#finishRaffleModal"),
+  finishRaffleForm: $("#finishRaffleForm"),
+  finishRaffleDetails: $("#finishRaffleDetails"),
+  confirmFinishRaffleButton: $("#confirmFinishRaffleButton"),
   soldMetric: $("#soldMetric"),
   availableMetric: $("#availableMetric"),
   paidMetric: $("#paidMetric"),
@@ -40,6 +45,7 @@ const elements = {
   raffleName: $("#raffleName"),
   rafflePrice: $("#rafflePrice"),
   raffleDate: $("#raffleDate"),
+  raffleLottery: $("#raffleLottery"),
 
   ticketModal: $("#ticketModal"),
   ticketForm: $("#ticketForm"),
@@ -122,6 +128,25 @@ function getPaymentState() {
   return document.querySelector('input[name="paymentState"]:checked').value === "paid";
 }
 
+function isRaffleFinalized() {
+  return Boolean(activeRaffle?.is_finalized);
+}
+
+function canModifyTickets() {
+  if (!activeRaffle) return false;
+
+  if (isRaffleFinalized()) {
+    showToast("Esta rifa está finalizada; las boletas están bloqueadas.", true);
+    return false;
+  }
+
+  return true;
+}
+
+function hasReachedDrawDate() {
+  return activeRaffle && new Date(activeRaffle.draw_date).getTime() <= Date.now();
+}
+
 function requireAdmin(callback) {
   if (isAdmin()) {
     callback();
@@ -152,6 +177,7 @@ function updateOverview() {
   elements.raffleOverview.hidden = !hasRaffle;
   elements.emptyState.hidden = hasRaffle;
   elements.editRaffleButton.hidden = !hasRaffle;
+  elements.finishRaffleButton.hidden = !hasRaffle;
 
   if (!hasRaffle) {
     renderClients();
@@ -166,6 +192,10 @@ function updateOverview() {
 
   elements.raffleTitle.textContent = activeRaffle.title;
   elements.drawDate.textContent = formatDate(activeRaffle.draw_date);
+  elements.finishRaffleButton.disabled = isRaffleFinalized();
+  elements.finishRaffleButton.textContent = isRaffleFinalized()
+    ? "Rifa finalizada"
+    : "Finalizar rifa";
   elements.soldMetric.textContent = `${sold}/100`;
   elements.availableMetric.textContent = String(available);
   elements.paidMetric.textContent = money.format(paid * price);
@@ -210,7 +240,9 @@ function renderTickets() {
       card.append(badge, buyer);
     }
 
+    card.classList.toggle("ticket--locked", isRaffleFinalized());
     card.addEventListener("click", () => {
+      if (!canModifyTickets()) return;
       requireAdmin(() => openTicketModal(number));
     });
 
@@ -284,7 +316,7 @@ function renderClients() {
     text.append(name, document.createTextNode(client.numbers.join(", ")));
     item.append(text);
 
-    if (client.pendingCount > 0) {
+    if (client.pendingCount > 0 && !isRaffleFinalized()) {
       const payButton = document.createElement("button");
       payButton.type = "button";
       payButton.className = "client-pay-button";
@@ -336,7 +368,8 @@ async function downloadRaffleImage() {
   drawFittedText(context, activeRaffle.title.toUpperCase(), width / 2, 245, 760, 82, "800", "Georgia, serif", palette.ink);
   context.font = "600 25px Arial, sans-serif";
   context.fillStyle = palette.inkSoft;
-  context.fillText(formatDate(activeRaffle.draw_date), width / 2, 310);
+  context.fillText(formatDate(activeRaffle.draw_date), width / 2, 292);
+  drawFittedText(context, `Lotería: ${activeRaffle.lottery || "Por definir"}`, width / 2, 328, 790, 22, "700", "Arial, sans-serif", palette.inkSoft);
   drawBurst(context, 226, 233, palette.accent, -1);
   drawBurst(context, 974, 233, palette.accent, 1);
 
@@ -491,7 +524,7 @@ function drawFittedText(context, text, x, y, maxWidth, maxSize, weight, family, 
   do {
     context.font = `${weight} ${size}px ${family}`;
     size -= 2;
-  } while (context.measureText(text).width > maxWidth && size > 24);
+  } while (context.measureText(text).width > maxWidth && size > 14);
 
   context.fillStyle = color;
   context.fillText(text, x, y);
@@ -648,6 +681,8 @@ async function subscribeToTickets() {
 }
 
 function openTicketModal(number) {
+  if (!canModifyTickets()) return;
+
   const ticket = ticketMap.get(number);
   const isEditing = Boolean(ticket);
 
@@ -701,9 +736,10 @@ async function createRaffle(event) {
   const title = elements.raffleName.value.trim();
   const ticketPrice = Number(elements.rafflePrice.value);
   const drawDate = elements.raffleDate.value;
+  const lottery = elements.raffleLottery.value.trim();
   const imageTemplate = new FormData(elements.raffleForm).get("imageTemplate") || "warm";
 
-  if (!title || !ticketPrice || !drawDate) return;
+  if (!title || !ticketPrice || !drawDate || !lottery) return;
 
   const { data, error } = await supabase
     .from("raffles")
@@ -711,14 +747,15 @@ async function createRaffle(event) {
       title,
       ticket_price: ticketPrice,
       draw_date: new Date(drawDate).toISOString(),
+      lottery,
       image_template: imageTemplate
     })
     .select()
     .single();
 
   if (error) {
-    if (error.message?.includes("image_template")) {
-      showToast("Antes de crear rifas con plantilla, ejecuta supabase-image-template-migration.sql en Supabase.", true);
+    if (error.message?.includes("image_template") || error.message?.includes("lottery")) {
+      showToast("Antes de crear rifas, ejecuta las migraciones SQL incluidas en el proyecto.", true);
       return;
     }
     showToast(`No se pudo crear la rifa: ${error.message}`, true);
@@ -773,10 +810,60 @@ async function saveRaffleName(event) {
   showToast("Nombre de la rifa actualizado.");
 }
 
+function openFinishRaffleModal() {
+  if (!activeRaffle || isRaffleFinalized()) return;
+
+  if (!hasReachedDrawDate()) {
+    showToast("Solo puedes finalizar la rifa cuando se cumpla la fecha y hora del sorteo.", true);
+    return;
+  }
+
+  elements.finishRaffleDetails.textContent =
+    `Vas a finalizar “${activeRaffle.title}”. El sorteo fue programado para ${formatDate(activeRaffle.draw_date)}.`;
+  showDialog(elements.finishRaffleModal);
+}
+
+async function finishRaffle(event) {
+  event.preventDefault();
+
+  if (!activeRaffle || isRaffleFinalized()) return;
+
+  if (!hasReachedDrawDate()) {
+    closeDialog(elements.finishRaffleModal);
+    showToast("La fecha y hora del sorteo aún no se cumplen.", true);
+    return;
+  }
+
+  elements.confirmFinishRaffleButton.disabled = true;
+
+  const { error } = await supabase
+    .from("raffles")
+    .update({
+      is_finalized: true,
+      finalized_at: new Date().toISOString()
+    })
+    .eq("id", activeRaffle.id);
+
+  elements.confirmFinishRaffleButton.disabled = false;
+
+  if (error) {
+    if (error.message?.includes("is_finalized")) {
+      showToast("Ejecuta la migración de finalización de rifas en Supabase antes de continuar.", true);
+      return;
+    }
+    showToast(`No se pudo finalizar la rifa: ${error.message}`, true);
+    return;
+  }
+
+  closeDialog(elements.finishRaffleModal);
+  await loadRaffles(activeRaffle.id);
+  showToast("Rifa finalizada. Las boletas quedaron bloqueadas.");
+}
+
 async function saveTicket(event) {
   event.preventDefault();
 
-  if (!activeRaffle) return;
+  if (!canModifyTickets()) return;
 
   const mode = elements.ticketForm.dataset.mode;
   const number = elements.ticketForm.dataset.number;
@@ -835,6 +922,8 @@ async function saveTicket(event) {
 }
 
 async function deleteTicket() {
+  if (!canModifyTickets()) return;
+
   const ticketId = elements.ticketForm.dataset.ticketId;
   const number = elements.ticketForm.dataset.number;
 
@@ -864,6 +953,8 @@ async function deleteTicket() {
 }
 
 function openClientPaymentModal(buyer) {
+  if (!canModifyTickets()) return;
+
   if (!activeRaffle || !elements.clientPaymentModal) {
     showToast("No se encontró el modal de confirmación.", true);
     return;
@@ -887,7 +978,7 @@ function openClientPaymentModal(buyer) {
 }
 
 async function markClientTicketsAsPaid(buyer) {
-  if (!activeRaffle) return false;
+  if (!canModifyTickets()) return false;
 
   const pendingTickets = tickets.filter(
     (ticket) => ticket.buyer.trim() === buyer && !ticket.is_paid
@@ -935,6 +1026,10 @@ elements.editRaffleButton.addEventListener("click", () => {
   requireAdmin(openEditRaffleModal);
 });
 elements.editRaffleForm.addEventListener("submit", saveRaffleName);
+elements.finishRaffleButton.addEventListener("click", () => {
+  requireAdmin(openFinishRaffleModal);
+});
+elements.finishRaffleForm.addEventListener("submit", finishRaffle);
 elements.ticketForm.addEventListener("submit", saveTicket);
 elements.deleteTicketButton.addEventListener("click", deleteTicket);
 elements.downloadImageButton.addEventListener("click", downloadRaffleImage);
